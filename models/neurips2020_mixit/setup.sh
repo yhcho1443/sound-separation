@@ -14,9 +14,11 @@
 # limitations under the License.
 
 # Define ROOT_DIR variable which will hold all downloaded/generated model data.
-# Uncomment next line and change to the directory for storing model data.
-# ROOT_DIR=/model_data
-# FUSS_ROOT_DIR=
+# Can be overridden via environment variables:
+#   export MODEL_ROOT_DIR=/content/drive/MyDrive/sound_separation
+#   export FUSS_ROOT_DIR=/content/fuss_data
+ROOT_DIR=${MODEL_ROOT_DIR:-${ROOT_DIR:-/content/drive/MyDrive/sound_separation}}
+FUSS_ROOT_DIR=${FUSS_ROOT_DIR:-/content/fuss_data}
 
 if [ x${ROOT_DIR} == x ]; then
   echo "Please define ROOT_DIR variable inside `dirname $0`/setup.sh."

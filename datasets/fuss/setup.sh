@@ -14,8 +14,8 @@
 # limitations under the License.
 
 # Define the ROOT_DIR variable which will hold all downloaded/generated data.
-# Uncomment next line.
-# ROOT_DIR=/data
+# Can be overridden via environment variable, e.g. export ROOT_DIR=/content/fuss_data
+ROOT_DIR=${ROOT_DIR:-/content/fuss_data}
 
 if [ x${ROOT_DIR} == x ]; then
   echo "Please define ROOT_DIR variable inside `dirname $0`/setup.sh."

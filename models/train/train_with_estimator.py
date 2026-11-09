@@ -15,7 +15,7 @@
 
 
 from . import inference_graph
-from tensorflow.compat.v1 import estimator as tf_estimator
+from . import tf_estimator_compat as tf_estimator
 
 
 def execute(model_fn, input_fn, **params):

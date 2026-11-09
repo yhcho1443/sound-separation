@@ -14,28 +14,38 @@
 """Network layers."""
 
 import copy
+import os
+
+os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
 
 import tensorflow.compat.v1 as tf
+
+try:
+  import tf_keras as keras_v1  # pylint: disable=g-import-not-at-top
+except ImportError:
+  keras_v1 = tf.keras
 
 from . import network_config
 from . import signal_util
 
 
-class LayerNormalizationScalarParams(tf.keras.layers.LayerNormalization):
+class LayerNormalizationScalarParams(keras_v1.layers.LayerNormalization):
   """tf.keras.layers.LayerNormalization with scalar bias and scale params."""
 
   def __init__(self, param_shape=None, **kwargs):
     super(LayerNormalizationScalarParams, self).__init__(**kwargs)
+    self._fused = False
 
   def build(self, input_shape):
     super(LayerNormalizationScalarParams, self).build([1] * len(input_shape))
+    self._fused = False
 
   def call(self, inputs):
     # Compute the axes along which to reduce the mean / variance
     input_shape = inputs.shape
     ndims = len(input_shape)
 
-    if not self._fused:
+    if not getattr(self, '_fused', False):
       # Calculate the moments on the last axis (layer activations).
       mean, variance = tf.nn.moments(inputs, self.axis, keep_dims=True)
 
@@ -214,7 +224,7 @@ def dense_layer(x, config):
     bias_initializer = tf.zeros_initializer
   else:
     bias_initializer = None
-  dense_output = tf.keras.layers.Dense(
+  dense_output = keras_v1.layers.Dense(
       config.num_outputs,
       activation=get_activation_fn(config.activation),
       use_bias=config.use_bias,
@@ -290,7 +300,7 @@ def time_convolution_layer(x, config):
   kernel_size = [config.kernel_size, 1]
   stride = [config.stride, 1]
   if config.separable:
-    y = tf.keras.layers.DepthwiseConv2D(
+    y = keras_v1.layers.DepthwiseConv2D(
         kernel_size,
         padding='SAME',
         depth_multiplier=1,

@@ -13,13 +13,22 @@
 # limitations under the License.
 """Inference for a separation model."""
 
-import distutils.util
+import os
+os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
+
 import numpy as np
 import tensorflow.compat.v1 as tf
 
 
 def strtobool(v: str) -> bool:
-  return bool(distutils.util.strtobool(v))
+  if isinstance(v, bool):
+    return v
+  val = str(v).strip().lower()
+  if val in ('y', 'yes', 't', 'true', 'on', '1'):
+    return True
+  if val in ('n', 'no', 'f', 'false', 'off', '0'):
+    return False
+  raise ValueError(f'Invalid truth value: {v!r}')
 
 
 def _pad_input(input_tensor: tf.Tensor, new_mics: int) -> tf.Tensor:

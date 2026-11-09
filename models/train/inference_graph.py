@@ -28,11 +28,12 @@ import copy
 import os
 
 import tensorflow.compat.v1 as tf
-from tensorflow.compat.v1 import estimator as tf_estimator
+from . import tf_estimator_compat as tf_estimator
 
 
 def write(model_fn, input_fn, params, directory):
   """Writes an inference graph."""
+  tf.gfile.MakeDirs(directory)
   input_fn_params = copy.deepcopy(params)
   input_fn_params['inference'] = True
   input_fn_params['batch_size'] = 1

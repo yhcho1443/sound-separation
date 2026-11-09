@@ -149,7 +149,7 @@ class Shaper(object):
       A transposed tf.Tensor.
     """
     transpose_arg = self._get_transpose_arg(input_axes_flat, output_axes_flat)
-    if transpose_arg != range(len(input_axes_flat)):
+    if transpose_arg != list(range(len(input_axes_flat))):
       return tf.transpose(tensor, transpose_arg)
     else:
       return tensor

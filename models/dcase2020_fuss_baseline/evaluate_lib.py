@@ -14,6 +14,16 @@
 """Evaluate separated audio from a DCASE 2020 task 4 separation model."""
 
 import os
+import sys
+
+os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
+
+cur_path = os.path.dirname(os.path.realpath(__file__))
+models_path = os.path.dirname(cur_path)
+tools_path = os.path.join(models_path, 'tools')
+for p in (cur_path, models_path, tools_path):
+  if p not in sys.path:
+    sys.path.insert(0, p)
 
 import numpy as np
 import pandas as pd
@@ -39,13 +49,22 @@ def _weights_for_active_seps(power_sources, power_separated):
 
 def compute_metrics(source_waveforms, separated_waveforms, mixture_waveform):
   """Permutation-invariant SI-SNR, powers, and under/equal/over-separation."""
+  num_refs = source_waveforms.shape[0]
+  num_seps = separated_waveforms.shape[0]
+  if num_seps > num_refs:
+    pad_zeros = np.zeros((num_seps - num_refs, source_waveforms.shape[1]),
+                         dtype=source_waveforms.dtype)
+    source_waveforms_padded = np.concatenate([source_waveforms, pad_zeros],
+                                             axis=0)
+  else:
+    source_waveforms_padded = source_waveforms
 
   # Align separated sources to reference sources.
   perm_inv_loss = permutation_invariant.wrap(
       lambda tar, est: -metrics.signal_to_noise_ratio_gain_invariant(est, tar))
-  _, separated_waveforms = perm_inv_loss(source_waveforms[tf.newaxis],
+  _, separated_waveforms = perm_inv_loss(source_waveforms_padded[tf.newaxis],
                                          separated_waveforms[tf.newaxis])
-  separated_waveforms = separated_waveforms[0]  # Remove batch axis.
+  separated_waveforms = separated_waveforms[0, :num_refs]  # Remove batch axis and extra padded slots.
 
   # Compute separated and source powers.
   power_separated = tf.reduce_mean(separated_waveforms ** 2, axis=-1)
@@ -141,7 +160,11 @@ def evaluate(checkpoint_path, metagraph_path, data_list_path, output_path):
       continue
     metrics_dict = compute_metrics(source_waveforms, separated_waveforms,
                                    waveforms['receiver_audio'])
-    metrics_dict = {k: v.numpy() for k, v in metrics_dict.items()}
+    if all(hasattr(v, 'numpy') for v in metrics_dict.values()):
+      metrics_dict = {k: v.numpy() for k, v in metrics_dict.items()}
+    else:
+      with tf.Session() as eval_sess:
+        metrics_dict = eval_sess.run(metrics_dict)
     sisnr_sep = metrics_dict['sisnr_separated']
     sisnr_mix = metrics_dict['sisnr_mixture']
     sisnr_imp = metrics_dict['sisnr_improvement']
@@ -176,7 +199,7 @@ def evaluate(checkpoint_path, metagraph_path, data_list_path, output_path):
       else:
         # Scalar metric.
         row_dict[metric_name] = metric_value
-    new_row = pd.Series(row_dict)
+    new_row = pd.DataFrame([row_dict])
     df = pd.concat([df, new_row], ignore_index=True)
 
     # Store metrics per source count and report results so far.

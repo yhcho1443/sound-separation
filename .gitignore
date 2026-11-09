@@ -1,0 +1,13 @@
+# Python bytecode & caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter / Colab checkpoints
+.ipynb_checkpoints/
+
+# Local data & model checkpoints
+/fuss_data/
+/download/
+/checkpoints/
+*.tar.gz

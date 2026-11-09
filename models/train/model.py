@@ -24,7 +24,7 @@ import typing
 import attr
 
 import tensorflow.compat.v1 as tf
-from tensorflow.compat.v1 import estimator as tf_estimator
+from . import tf_estimator_compat as tf_estimator
 
 from . import consistency
 from . import groupwise

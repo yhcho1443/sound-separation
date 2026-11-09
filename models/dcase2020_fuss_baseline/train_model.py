@@ -15,8 +15,16 @@ r"""Train the DCASE2020 FUSS baseline source separation model."""
 
 import argparse
 import os
+import sys
+
+os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
 
 import tensorflow.compat.v1 as tf
+
+cur_path = os.path.dirname(os.path.realpath(__file__))
+models_path = os.path.dirname(cur_path)
+if models_path not in sys.path:
+  sys.path.insert(0, models_path)
 
 from train import data_io
 from train import model
@@ -24,6 +32,8 @@ from train import train_with_estimator
 
 
 def main():
+  tf.disable_v2_behavior()
+  tf.logging.set_verbosity(tf.logging.INFO)
   parser = argparse.ArgumentParser(
       description='Train the DCASE2020 FUSS baseline source separation model.')
   parser.add_argument(
